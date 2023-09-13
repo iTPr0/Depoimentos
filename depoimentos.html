@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt_BR">
+
+<head>
+    <!-- METAS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- TITLE -->
+    <title>Depoimentos</title>
+    <!-- LINKS - CSS -->
+    <link rel="stylesheet" type="text/css" href="ativos/css/style.css">
+    <!-- LINKS - FancyBox -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.css" />
+</head>
+
+<body>
+    <div id="depoimentos">
+        <div class="test-body">
+            <!-- Depoimentos serão adicionados aqui dinamicamente -->
+        </div>
+        <div class="indicator">
+            <!-- Indicadores serão adicionados aqui dinamicamente -->
+        </div>
+    </div>
+    <!-- SCRIPTS - FireBaseConfig -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "SEU_ID",
+            authDomain: "SEU_DOMINIO",
+            projectId: "SEU_PROJETO_ID",
+            storageBucket: "SEU_BUCKET",
+            messagingSenderId: "SEU_ID_MENSAGEM",
+            appId: "SEU_ID_APP"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const depoimentosDiv = document.querySelector('.test-body');
+        const indicatorDiv = document.querySelector('.indicator');
+
+        let slides = [];
+        let indicators = [];
+
+        function display(index) {
+            slides.forEach((slide, idx) => {
+                if (idx === index) {
+                    slide.style.display = 'block';
+                } else {
+                    slide.style.display = 'none';
+                }
+            });
+        }
+
+        function createIndicators(numIndicators) {
+            indicators = [];
+            indicatorDiv.innerHTML = '';
+            for (let i = 0; i < numIndicators; i++) {
+                const indicator = document.createElement('span');
+                indicator.classList.add('btn');
+                indicatorDiv.appendChild(indicator);
+                indicators.push(indicator);
+
+                indicator.addEventListener('click', () => {
+                    display(i);
+                    for (let j = 0; j < indicators.length; j++) {
+                        indicators[j].classList.remove('active');
+                    }
+                    indicator.classList.add('active');
+                });
+            }
+            indicators[0].classList.add('active');
+        }
+
+        function exibirDepoimentos() {
+            depoimentosDiv.innerHTML = '';
+
+            database.ref('depoimentos').once('value', (snapshot) => {
+                const depoimentos = snapshot.val() || {};
+                const numDepoimentos = Object.keys(depoimentos).length;
+
+                createIndicators(numDepoimentos);
+
+                for (const key in depoimentos) {
+                    const depoimento = depoimentos[key];
+                    const depoimentoDiv = document.createElement('div');
+                    depoimentoDiv.classList.add('item');
+                    depoimentoDiv.style.display = 'none';
+                    depoimentoDiv.innerHTML = `
+                        <main>
+                            <div class="testimonial">
+                                <div class="slide-row" id="slide">
+                                    <div class="slide-col">
+                                        <div class="user-text">
+                                                <p>${depoimento.descricao}</p>
+                                            <div class="nome">
+                                                <h2>${depoimento.nome}</h2>
+                                            </div>
+                                            <div class="profissao">
+                                                <p>${depoimento.profissao}</p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <a href="${depoimento.imagem}" data-fancybox="true">
+                                                <div class="user-img">
+                                                    <img src="${depoimento.imagem}" alt="${depoimento.nome}">
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </main>
+                    `;
+
+                    depoimentosDiv.appendChild(depoimentoDiv);
+                }
+
+                slides = document.querySelectorAll(".item");
+                display(0);
+            });
+        }
+
+        exibirDepoimentos();
+    </script>
+</body>
+</html>
